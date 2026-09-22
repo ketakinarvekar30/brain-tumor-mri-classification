@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CortexScan Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f2f4f7; --panel:#ffffff; --panel-2:#f3f5f8; --line:#e4e9ee;
+    --indigo:#4a4fe0; --indigo-dark:#3538b3; --indigo-soft:#edeefd;
+    --teal:#0f9e88; --teal-soft:#e3f5f1;
+    --coral:#d84a3c; --coral-soft:#fbeae8;
+    --amber:#c07a17; --amber-soft:#fbf0dc;
+    --text:#0e171a; --muted:#5d6d73; --muted-2:#8a989d;
+    --mono:'IBM Plex Mono',monospace; --display:'Space Grotesk',sans-serif; --sans:'Inter',sans-serif;
+    --shadow: 0 1px 2px rgba(16,27,30,0.05), 0 10px 28px rgba(16,27,30,0.06);
+    --shadow-lg: 0 4px 10px rgba(16,27,30,0.06), 0 20px 44px rgba(16,27,30,0.09);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width: 1040px; margin:0 auto; padding: 0 24px 70px; }
+
+  /* ---------------- Hero ---------------- */
+  .hero{
+    position:relative;
+    background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+    border-radius: 0 0 28px 28px;
+    padding: 30px 24px 46px;
+    margin-bottom: -30px;
+    color: #fff;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 80% 80% at 85% 15%, black 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 85% 15%, black 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .hero-inner{ max-width: 1040px; margin:0 auto; position:relative; z-index:1; }
+  header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:30px; }
+  .brand{ display:flex; align-items:center; gap:11px; }
+  .brand-mark{
+    width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.16);
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter: blur(4px);
+  }
+  .brand-mark svg{ width:19px; height:19px; }
+  .brand-name{ font-family:var(--display); font-weight:700; font-size:17px; letter-spacing:-0.01em; }
+  .status-pill{
+    display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11.5px;
+    background: rgba(255,255,255,0.14); padding:7px 14px; border-radius:20px;
+  }
+  .status-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.5); }
+  .status-dot.live{ background:#5eeccb; box-shadow:0 0 8px #5eeccb; }
+  .status-dot.down{ background:#ff9a8a; }
+
+  .hero-title{ font-family:var(--display); font-weight:700; font-size:clamp(24px,3.6vw,32px); letter-spacing:-0.015em; max-width:520px; line-height:1.2; }
+  .hero-sub{ font-size:14px; color:rgba(255,255,255,0.75); margin-top:10px; max-width:460px; line-height:1.6; }
+
+  /* ---------------- Stat cards (overlapping hero) ---------------- */
+  .stat-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:14px; position:relative; z-index:2; margin-bottom:26px; }
+  @media (max-width:700px){ .stat-grid{ grid-template-columns: repeat(2,1fr); } }
+  .stat-card{
+    background:var(--panel); border-radius:14px; padding:18px 20px; box-shadow:var(--shadow-lg);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .stat-icon{
+    width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .stat-icon svg{ width:16px; height:16px; }
+  .stat-num{ font-family:var(--display); font-size:23px; font-weight:700; letter-spacing:-0.01em; }
+  .stat-label{ font-size:12px; color:var(--muted); }
+
+  /* ---------------- Panels ---------------- */
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px;
+    box-shadow:var(--shadow); margin-bottom:20px;
+  }
+  .panel-title{
+    font-family:var(--display); font-size:14.5px; font-weight:600; letter-spacing:-0.005em;
+    margin-bottom:18px; display:flex; align-items:center; gap:9px; color:var(--text);
+  }
+  .panel-title .bar{ width:4px; height:15px; border-radius:2px; background:var(--indigo); }
+
+  .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  @media (max-width:760px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .kv-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .kv-table td{ padding:11px 4px; border-bottom:1px solid var(--line); }
+  .kv-table tr:last-child td{ border-bottom:none; }
+  .kv-table td:first-child{ color:var(--muted); }
+  .kv-table td:last-child{ text-align:right; font-family:var(--mono); font-weight:600; color:var(--text); }
+  .kv-highlight td:last-child{ color:var(--indigo); font-size:16px; }
+
+  table.metrics{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  table.metrics th{ text-align:left; font-family:var(--mono); font-size:10.5px; color:var(--muted-2); padding:8px 8px; border-bottom:1.5px solid var(--line); font-weight:500; }
+  table.metrics td{ padding:12px 8px; border-bottom:1px solid var(--line); }
+  table.metrics tr:last-child td{ border-bottom:none; }
+  table.metrics tr:hover td{ background:var(--panel-2); }
+  .class-pill{ display:inline-flex; align-items:center; gap:7px; font-weight:600; }
+  .class-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+  .placeholder-msg{ text-align:center; padding:30px 20px; color:var(--muted); font-size:13px; background:var(--panel-2); border-radius:12px; border:1.5px dashed var(--line); line-height:1.7; }
+  .placeholder-msg code{ font-family:var(--mono); color:var(--indigo); background:var(--indigo-soft); padding:2px 7px; border-radius:5px; font-size:12px; }
+
+  .classify-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+  @media (max-width:760px){ .classify-grid{ grid-template-columns:1fr; } }
+
+  .scan-frame{
+    position:relative; aspect-ratio:1/1; border-radius:14px; border:2px dashed var(--line);
+    background:var(--panel-2); display:flex; align-items:center; justify-content:center;
+    overflow:hidden; cursor:pointer; transition: all .2s ease;
+  }
+  .scan-frame:hover{ border-color:var(--indigo); background: var(--indigo-soft); }
+  .scan-frame.drag-over{ border-color:var(--indigo); background:var(--indigo-soft); transform: scale(1.01); }
+  .scan-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .placeholder{ text-align:center; color:var(--muted); padding:20px; }
+  .placeholder .icon-circle{
+    width:52px; height:52px; border-radius:50%; background:var(--indigo-soft);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px;
+  }
+  .placeholder .hint{ font-size:13px; font-weight:500; }
+  .placeholder .hint b{ color:var(--indigo); font-weight:700; }
+  .placeholder .filetypes{ font-family:var(--mono); font-size:10.5px; color:var(--muted-2); margin-top:8px; }
+  .sweep{ position:absolute; left:0; right:0; height:2.5px; background:linear-gradient(90deg,transparent,var(--indigo),transparent); opacity:0; top:0; box-shadow:0 0 12px var(--indigo); }
+  .scan-frame.scanning .sweep{ opacity:1; animation:sweep 1.3s ease-in-out infinite; }
+  @keyframes sweep{ 0%{top:0;opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{top:100%;opacity:0;} }
+  input[type=file]{ display:none; }
+
+  .actions{ display:flex; gap:10px; margin-top:16px; }
+  button{ font-family:var(--sans); font-size:13.5px; font-weight:600; border-radius:10px; border:none; cursor:pointer; padding:12px 18px; transition:all .15s ease; }
+  .btn-primary{ background:var(--indigo); color:#fff; flex:1; box-shadow: 0 4px 14px rgba(74,79,224,0.28); }
+  .btn-primary:hover{ background:var(--indigo-dark); transform: translateY(-1px); }
+  .btn-primary:disabled{ background:var(--panel-2); color:var(--muted-2); cursor:not-allowed; box-shadow:none; transform:none; }
+  .btn-ghost{ background:transparent; border:1.5px solid var(--line); color:var(--muted); }
+  .btn-ghost:hover{ border-color:var(--muted-2); color:var(--text); }
+  .server-note{ margin-top:14px; font-family:var(--mono); font-size:10.5px; color:var(--muted-2); display:flex; align-items:center; gap:6px; }
+
+  .empty-result{ height:100%; min-height:280px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:13px; text-align:center; padding:20px; }
+  .verdict{ display:flex; align-items:center; justify-content:space-between; padding:18px; border-radius:14px; margin-bottom:18px; border:1.5px solid var(--line); }
+  .verdict.tumor{ border-color:rgba(216,74,60,0.3); background: linear-gradient(135deg, var(--coral-soft), #fff); }
+  .verdict.clear{ border-color:rgba(15,158,136,0.3); background: linear-gradient(135deg, var(--teal-soft), #fff); }
+  .verdict-label{ font-size:11.5px; color:var(--muted); font-family:var(--mono); margin-bottom:6px; }
+  .verdict-value{ font-size:20px; font-weight:700; font-family:var(--display); }
+  .verdict.tumor .verdict-value{ color:var(--coral); }
+  .verdict.clear .verdict-value{ color:var(--teal); }
+  .confidence-ring{ font-family:var(--mono); font-size:14px; font-weight:700; width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3.5px solid var(--indigo-soft); flex-shrink:0; background:var(--panel); color:var(--indigo); }
+
+  .prob-row{ margin-bottom:0; display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:11px 2px; border-bottom:1px solid var(--line); }
+  .prob-row:last-child{ border-bottom:none; }
+  .prob-row .name{ font-weight:500; }
+  .prob-row .val{ font-family:var(--mono); color:var(--muted); font-weight:600; }
+  .disclaimer{ margin-top:18px; padding:12px 14px; background:var(--panel-2); border-radius:10px; font-size:11.5px; color:var(--muted-2); line-height:1.6; }
+
+  footer{ text-align:center; margin-top:44px; color:var(--muted-2); font-family:var(--mono); font-size:11px; }
+
+  button:focus-visible, .scan-frame:focus-visible, input[type=file]:focus-visible{
+    outline: 2.5px solid var(--indigo); outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .sweep, .btn-primary{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2.2" fill="#fff" stroke="none"/><path d="M7.6 7 10.4 10.4M16.4 7 13.6 10.4M7.6 17 10.4 13.6M16.4 17 13.6 13.6"/></svg>
+        </div>
+        <div class="brand-name">CortexScan</div>
+      </div>
+      <div class="status-pill"><span class="status-dot" id="statusDot"></span><span id="statusText">checking server…</span></div>
+    </header>
+    <div class="hero-title">Brain tumor MRI classification dashboard</div>
+    <div class="hero-sub">Live model status, validation and test performance, and instant scan classification — all in one place.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stat-grid" id="overviewStats"></div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title"><span class="bar"></span>Validation accuracy</div>
+      <div id="validationAccuracy"><div class="placeholder-msg">No training history loaded. Run <code>generate_metrics_json.py</code>, then start <code>app.py</code>.</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="bar"></span>Test set results</div>
+      <div id="overviewMetrics"><div class="placeholder-msg">No results loaded. Run <code>generate_metrics_json.py</code>, then start <code>app.py</code>.</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="bar"></span>Per-class precision / recall / F1</div>
+    <div id="metricsTableWrap">
+      <div class="placeholder-msg">No metrics loaded yet. Once <code>app.py</code> is running with <code>outputs/metrics.json</code> present, this table fills in automatically.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="bar"></span>Classify a scan</div>
+    <div class="classify-grid">
+      <div>
+        <div class="scan-frame" id="dropzone" tabindex="0" role="button" aria-label="Upload an MRI scan">
+          <div class="sweep"></div>
+          <div class="placeholder" id="placeholder">
+            <div class="icon-circle">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="1.6"><path d="M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16"/><path d="M14 14l1.586-1.586a2 2 0 0 1 2.828 0L21 15"/><circle cx="8" cy="8" r="1.5" fill="var(--indigo)" stroke="none"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+            </div>
+            <div class="hint"><b>Click to upload</b> or drag an MRI image here</div>
+            <div class="filetypes">JPG · PNG — resized to 224×224</div>
+          </div>
+          <img id="preview" style="display:none;" alt="Uploaded MRI scan preview">
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="actions">
+          <button class="btn-primary" id="analyzeBtn" disabled>Analyze scan</button>
+          <button class="btn-ghost" id="resetBtn">Reset</button>
+        </div>
+        <div class="server-note">Backend: <span id="apiUrlLabel">http://localhost:5000</span>/predict</div>
+      </div>
+      <div id="resultBody"><div class="empty-result">Upload a scan and run analysis to see the result here.</div></div>
+    </div>
+  </div>
+
+  <footer>BrainCNN · 4-block CNN · glioma / meningioma / notumor / pituitary</footer>
+</div>
+
+<script>
+  const API_URL = "http://localhost:5000";
+  document.getElementById('apiUrlLabel').textContent = API_URL;
+
+  const overviewStats = document.getElementById('overviewStats');
+  const STAT_ICONS = {
+    classes: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+    optimizer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>`,
+    batch: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+    epochs: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>`,
+  };
+  [
+    { key:"classes", label: "Classes", value: "4", color: "var(--indigo)", bg:"var(--indigo-soft)" },
+    { key:"optimizer", label: "Optimizer", value: "Adam", color: "var(--teal)", bg:"var(--teal-soft)" },
+    { key:"batch", label: "Batch size", value: "64", color: "var(--amber)", bg:"var(--amber-soft)" },
+    { key:"epochs", label: "Max epochs", value: "50", color: "var(--coral)", bg:"var(--coral-soft)" },
+  ].forEach(s => {
+    overviewStats.innerHTML += `
+      <div class="stat-card">
+        <div class="stat-icon" style="background:${s.bg}; color:${s.color}">${STAT_ICONS[s.key]}</div>
+        <div>
+          <div class="stat-num">${s.value}</div>
+          <div class="stat-label">${s.label}</div>
+        </div>
+      </div>`;
+  });
+
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+
+  async function checkHealth(){
+    try{
+      const res = await fetch(`${API_URL}/health`);
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+      statusDot.className = 'status-dot live';
+      statusText.textContent = `online · ${data.device}`;
+      loadMetrics();
+      loadTrainingSummary();
+    }catch(e){
+      statusDot.className = 'status-dot down';
+      statusText.textContent = 'server offline';
+    }
+  }
+  checkHealth();
+
+  async function loadMetrics(){
+    try{
+      const res = await fetch(`${API_URL}/api/metrics`);
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+      renderMetrics(data);
+    }catch(e){ /* metrics.json not generated yet — leave placeholder */ }
+  }
+
+  async function loadTrainingSummary(){
+    try{
+      const res = await fetch(`${API_URL}/api/training-summary`);
+      if(!res.ok) throw new Error();
+      const data = await res.json();
+      document.getElementById('validationAccuracy').innerHTML = `
+        <table class="kv-table">
+          <tr class="kv-highlight"><td>Best validation accuracy</td><td>${data.best_val_acc.toFixed(2)}%</td></tr>
+          <tr><td>Reached at epoch</td><td>${data.best_epoch} of ${data.total_epochs}</td></tr>
+          <tr><td>Final validation loss</td><td>${data.final_val_loss.toFixed(4)}</td></tr>
+        </table>`;
+    }catch(e){ /* training_history.csv not found yet — leave placeholder */ }
+  }
+
+  function renderMetrics(data){
+    const wrap = document.getElementById('metricsTableWrap');
+    let rows = data.per_class.map(c => `
+      <tr>
+        <td><span class="class-pill"><span class="class-dot" style="background:${c.color || 'var(--indigo)'}"></span>${c.name}</span></td>
+        <td>${c.precision.toFixed(2)}</td><td>${c.recall.toFixed(2)}</td>
+        <td>${c.f1.toFixed(2)}</td><td>${c.support}</td>
+      </tr>`).join('');
+    wrap.innerHTML = `
+      <table class="metrics">
+        <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    document.getElementById('overviewMetrics').innerHTML = `
+      <table class="kv-table">
+        <tr class="kv-highlight"><td>Accuracy</td><td>${(data.accuracy*100).toFixed(2)}%</td></tr>
+        <tr><td>Precision</td><td>${(data.precision*100).toFixed(2)}%</td></tr>
+        <tr><td>Recall</td><td>${(data.recall*100).toFixed(2)}%</td></tr>
+        <tr><td>F1 score</td><td>${(data.f1*100).toFixed(2)}%</td></tr>
+      </table>`;
+  }
+
+  /* ---------------- Classify logic ---------------- */
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const placeholder = document.getElementById('placeholder');
+  const preview = document.getElementById('preview');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const resultBody = document.getElementById('resultBody');
+  let selectedFile = null;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); } });
+  ['dragover','dragenter'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag-over'); }));
+  dropzone.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if(f) handleFile(f); });
+  fileInput.addEventListener('change', e => { const f = e.target.files[0]; if(f) handleFile(f); });
+
+  function handleFile(file){
+    if(!file.type.startsWith('image/')) return;
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = e => { preview.src = e.target.result; preview.style.display='block'; placeholder.style.display='none'; };
+    reader.readAsDataURL(file);
+    analyzeBtn.disabled = false;
+  }
+
+  resetBtn.addEventListener('click', () => {
+    selectedFile = null; fileInput.value = '';
+    preview.style.display='none'; placeholder.style.display='block';
+    analyzeBtn.disabled = true; dropzone.classList.remove('scanning');
+    resultBody.innerHTML = `<div class="empty-result">Upload a scan and run analysis to see the result here.</div>`;
+  });
+
+  analyzeBtn.addEventListener('click', async () => {
+    if(!selectedFile) return;
+    dropzone.classList.add('scanning');
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing…';
+
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+
+    try{
+      const res = await fetch(`${API_URL}/predict`, { method:'POST', body: formData });
+      if(!res.ok){ const err = await res.json().catch(()=>({})); throw new Error(err.error || 'Prediction failed'); }
+      const data = await res.json();
+      renderResult(data);
+    }catch(e){
+      resultBody.innerHTML = `<div class="empty-result" style="color:var(--coral)">Could not reach the model server.<br><br>Make sure app.py is running on ${API_URL}.</div>`;
+    }finally{
+      dropzone.classList.remove('scanning');
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = 'Analyze scan';
+    }
+  });
+
+  function renderResult(data){
+    const isTumor = data.is_tumor;
+    const sortedProbs = Object.entries(data.probabilities).sort((a,b) => b[1]-a[1]);
+
+    let html = `
+      <div class="verdict ${isTumor ? 'tumor' : 'clear'}">
+        <div><div class="verdict-label">${isTumor ? 'Tumor detected' : 'Result'}</div><div class="verdict-value">${data.prediction}</div></div>
+        <div class="confidence-ring">${data.confidence}%</div>
+      </div>`;
+    sortedProbs.forEach(([label,pct]) => {
+      html += `<div class="prob-row"><span class="name">${label}</span><span class="val">${pct}%</span></div>`;
+    });
+    html += `<div class="disclaimer">Model output only — not a medical diagnosis. Results should be reviewed by a qualified radiologist.</div>`;
+    resultBody.innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
